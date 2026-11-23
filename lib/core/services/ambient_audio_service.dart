@@ -20,9 +20,9 @@ enum AmbientSound {
 
   String? get assetPath => switch (this) {
         AmbientSound.off => null,
-        AmbientSound.rain => 'assets/audio/rain.wav',
-        AmbientSound.cafe => 'assets/audio/cafe.wav',
-        AmbientSound.whiteNoise => 'assets/audio/white_noise.wav',
+        AmbientSound.rain => 'assets/audio/rain.mp3',
+        AmbientSound.cafe => 'assets/audio/cafe.mp3',
+        AmbientSound.whiteNoise => 'assets/audio/white_noise.mp3',
       };
 }
 
@@ -67,7 +67,7 @@ class _StudySpaceAudioHandler extends BaseAudioHandler {
     );
     await _player.setAsset(assetPath);
     await _player.setLoopMode(LoopMode.one);
-    await _player.setVolume(0.55);
+    await _player.setVolume(0.75);
   }
 
   @override
@@ -227,7 +227,7 @@ class BackgroundAmbientAudioService implements AmbientAudioService {
   Future<void> playChime() async {
     try {
       _chimePlayer ??= AudioPlayer(handleAudioSessionActivation: false);
-      await _chimePlayer!.setAsset('assets/audio/chime.wav');
+      await _chimePlayer!.setAsset('assets/audio/chime.mp3');
       await _chimePlayer!.setVolume(0.8);
       unawaited(_chimePlayer!.play());
     } catch (_) {}
