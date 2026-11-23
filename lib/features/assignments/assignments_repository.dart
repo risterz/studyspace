@@ -62,14 +62,14 @@ List<Assignment> filterAssignments(
 }
 
 String formatDueLabel(DateTime dueAt, DateTime now) {
-  final today = DateTime(now.year, now.month, now.day);
-  final dueDay = DateTime(dueAt.year, dueAt.month, dueAt.day);
-  final diffDays = dueDay.difference(today).inDays;
+  if (dueAt.isBefore(now)) return 'Overdue';
+  final todayUtc = DateTime.utc(now.year, now.month, now.day);
+  final dueDayUtc = DateTime.utc(dueAt.year, dueAt.month, dueAt.day);
+  final diffDays = dueDayUtc.difference(todayUtc).inDays;
 
-  if (dueAt.isBefore(now) && diffDays < 0) return 'Overdue';
-  if (diffDays == 0) return 'Due today';
+  if (diffDays <= 0) return 'Due today';
   if (diffDays == 1) return 'Due tomorrow';
-  if (diffDays > 1 && diffDays <= 6) {
+  if (diffDays <= 6) {
     return 'Due ${DateFormat('EEE').format(dueAt)}';
   }
   return 'Due ${DateFormat('MMM d').format(dueAt)}';

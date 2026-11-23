@@ -58,6 +58,26 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
             children: [
               Text('Working on', style: t.titleLarge),
               const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(PhosphorIconsRegular.sparkle, color: c.mint),
+                title: const Text('General study'),
+                onTap: () {
+                  ref.read(focusControllerProvider.notifier).setWorkingOn(
+                        assignmentId: null,
+                        subjectId: null,
+                      );
+                  Navigator.of(context).pop();
+                },
+              ),
+              if (activeAssignments.isEmpty && subjects.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Add subjects or assignments to link specific focus sessions.',
+                    style: t.bodyMedium,
+                  ),
+                ),
               if (activeAssignments.isNotEmpty) ...[
                 Text('Assignments', style: t.labelMedium),
                 const SizedBox(height: 6),
@@ -179,7 +199,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
     final subjects = ref.watch(subjectsProvider).valueOrNull ?? const <Subject>[];
     final subjectsMap = ref.watch(subjectsByIdProvider);
 
-    // Resolve "Working on" label cleanly
+    // Resolve "Working on" label accurately (matches persisted focus session linkage)
     String workingOnLabel = 'General study';
     if (state.linkedAssignmentId != null) {
       final match = assignments.where((a) => a.id == state.linkedAssignmentId);
@@ -187,8 +207,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
     } else if (state.linkedSubjectId != null &&
         subjectsMap.containsKey(state.linkedSubjectId)) {
       workingOnLabel = subjectsMap[state.linkedSubjectId]!.name;
-    } else if (assignments.isNotEmpty) {
-      workingOnLabel = assignments.first.title;
     }
 
     final isBreak = state.phase != FocusPhase.focus;

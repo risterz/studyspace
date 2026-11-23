@@ -124,4 +124,52 @@ void main() {
       await db.close();
     },
   );
+
+  testWidgets(
+    'NoteEditorScreen deleting a note keeps it deleted after pop (no resurrection)',
+    timeout: const Timeout(Duration(seconds: 20)),
+    (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await seedSampleSemester(db, displayName: 'Maya', referenceNow: DateTime(2026, 11, 23, 9, 30));
+      final seeded = await db.getAllNotes();
+      final target = seeded.firstWhere((n) => n.title == 'Cell membrane review');
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appDatabaseProvider.overrideWithValue(db)],
+          child: MaterialApp(
+            theme: buildStudySpaceTheme(Brightness.light),
+            home: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NoteEditorScreen(noteId: target.id),
+                      ),
+                    ),
+                    child: const Text('Open'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cell membrane review'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Delete note'));
+      await tester.pumpAndSettle();
+
+      final afterDelete = await db.getNoteById(target.id);
+      expect(afterDelete, isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 50));
+      await db.close();
+    },
+  );
 }

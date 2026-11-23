@@ -7,6 +7,7 @@ import 'package:studyspace/app/widgets/pastel_card.dart';
 import 'package:studyspace/core/db/app_database.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/core/db/sample_seeder.dart';
+import 'package:studyspace/core/services/notification_service.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -47,6 +48,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         ),
       );
     }
+
+    await syncAllRemindersFromDb(db, ref.read(notificationServiceProvider));
 
     if (mounted) {
       setState(() => _saving = false);

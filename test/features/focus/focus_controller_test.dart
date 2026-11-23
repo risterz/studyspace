@@ -143,10 +143,14 @@ void main() {
     final logged = await db.watchAllFocusSessions().first;
     expect(logged.length, 1);
 
-    // Ambient sound selection delegates cleanly
+    // Ambient sound selection delegates cleanly and pausing timer pauses ambient audio
     await ctrl.selectAmbient(AmbientSound.cafe);
     expect(fakeAudio.currentSound, AmbientSound.cafe);
     expect(fakeAudio.isPlaying, isTrue);
+
+    await ctrl.start();
+    await ctrl.pause();
+    expect(fakeAudio.isPlaying, isFalse);
   });
 
   testWidgets(
@@ -179,6 +183,8 @@ void main() {
       expect(find.text('Start focus'), findsOneWidget);
       expect(find.text('Pause'), findsOneWidget);
       expect(find.text('Reset'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('General study'), 200);
+      expect(find.text('General study'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('Rain'), 200);
       expect(find.text('Rain'), findsOneWidget);
 

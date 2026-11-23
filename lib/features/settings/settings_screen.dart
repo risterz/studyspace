@@ -291,9 +291,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     body: 'This replaces your current classes, assignments, exams, and notes with sample semester data.',
                     confirmLabel: 'Load sample',
                     onConfirm: () async {
+                      final db = ref.read(appDatabaseProvider);
                       await seedSampleSemester(
-                        ref.read(appDatabaseProvider),
+                        db,
                         displayName: profile?.displayName ?? 'Student',
+                      );
+                      await syncAllRemindersFromDb(
+                        db,
+                        ref.read(notificationServiceProvider),
                       );
                     },
                   ),
@@ -309,7 +314,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     title: 'Clear all study data?',
                     body: 'This permanently removes all subjects, classes, tasks, exams, focus logs, and notes on this device.',
                     confirmLabel: 'Clear all',
-                    onConfirm: () => ref.read(appDatabaseProvider).clearAllData(),
+                    onConfirm: () async {
+                      final db = ref.read(appDatabaseProvider);
+                      await db.clearAllData();
+                      await syncAllRemindersFromDb(
+                        db,
+                        ref.read(notificationServiceProvider),
+                      );
+                    },
                   ),
                 ),
               ],

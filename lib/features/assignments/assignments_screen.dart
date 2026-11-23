@@ -8,6 +8,7 @@ import 'package:studyspace/app/widgets/pastel_card.dart';
 import 'package:studyspace/app/widgets/subject_badge.dart';
 import 'package:studyspace/core/db/app_database.dart';
 import 'package:studyspace/core/db/database_providers.dart';
+import 'package:studyspace/core/services/notification_service.dart';
 import 'package:studyspace/features/assignments/assignment_editor_sheet.dart';
 import 'package:studyspace/features/assignments/assignments_providers.dart';
 import 'package:studyspace/features/assignments/assignments_repository.dart';
@@ -177,11 +178,15 @@ class AssignmentsScreen extends ConsumerWidget {
                           InkWell(
                             key: Key('toggle_assignment_${item.title}'),
                             customBorder: const CircleBorder(),
-                            onTap: () {
+                            onTap: () async {
                               HapticFeedback.selectionClick();
-                              ref
+                              await ref
                                   .read(assignmentsRepositoryProvider)
                                   .toggleCompleted(item, !item.isCompleted);
+                              await syncAllRemindersFromDb(
+                                ref.read(appDatabaseProvider),
+                                ref.read(notificationServiceProvider),
+                              );
                             },
                             child: SizedBox(
                               width: 48,
@@ -288,7 +293,7 @@ class AssignmentsScreen extends ConsumerWidget {
                 onTap: () => showAssignmentEditorSheet(context),
               ),
             ] else ...[
-              // Exams Countdown View
+              // Exams Countdown View (upcoming first, past below)
               if (exams.isEmpty)
                 PastelCard(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
@@ -307,79 +312,35 @@ class AssignmentsScreen extends ConsumerWidget {
                     ],
                   ),
                 )
-              else
-                ...exams.map((exam) {
-                  final subject =
-                      exam.subjectId == null ? null : subjects[exam.subjectId];
-                  final info = computeExamCountdown(exam.examAt, now);
-                  final (pillBg, pillFg) = switch (info.urgency) {
-                    ExamUrgency.urgent => (c.coralSoft, c.danger),
-                    ExamUrgency.soon => (c.amberSoft, c.warning),
-                    ExamUrgency.normal => (c.primarySoft, c.primary),
-                    ExamUrgency.past => (c.mintSoft, c.mint),
-                  };
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: PastelCard(
-                      onTap: () => showExamEditorSheet(context, existing: exam),
-                      child: Row(
-                        children: [
-                          SubjectBadge(subject: subject, size: 46, iconSize: 22),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  exam.title,
-                                  style: t.titleMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${DateFormat('MMM d · h:mm a').format(exam.examAt)}${exam.location.isEmpty ? '' : ' · ${exam.location}'}',
-                                  style: t.bodyMedium?.copyWith(fontSize: 13),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (subject != null) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    subject.name,
-                                    style: t.labelMedium?.copyWith(color: c.primary),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: pillBg,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Text(
-                              info.label,
-                              style: TextStyle(
-                                fontFamily: 'PlusJakartaSans',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: pillFg,
-                                fontFeatures: const [FontFeature.tabularFigures()],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+              else ...[
+                ...exams
+                    .where((e) => !e.examAt.isBefore(now))
+                    .map((exam) => _ExamCard(
+                          exam: exam,
+                          subject: exam.subjectId == null
+                              ? null
+                              : subjects[exam.subjectId],
+                          now: now,
+                        )),
+                if (exams.any((e) => e.examAt.isBefore(now))) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text('Past exams', style: t.labelMedium),
+                  ),
+                  ...exams
+                      .where((e) => e.examAt.isBefore(now))
+                      .toList()
+                      .reversed
+                      .map((exam) => _ExamCard(
+                            exam: exam,
+                            subject: exam.subjectId == null
+                                ? null
+                                : subjects[exam.subjectId],
+                            now: now,
+                          )),
+                ],
+              ],
               const SizedBox(height: 8),
               _SoftActionButton(
                 label: 'Add exam',
@@ -470,6 +431,89 @@ class _FilterPill extends StatelessWidget {
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             color: selected ? c.primary : c.inkPrimary,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExamCard extends StatelessWidget {
+  const _ExamCard({
+    required this.exam,
+    required this.subject,
+    required this.now,
+  });
+
+  final Exam exam;
+  final Subject? subject;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = StudySpaceColors.of(context);
+    final t = Theme.of(context).textTheme;
+    final info = computeExamCountdown(exam.examAt, now);
+    final (pillBg, pillFg) = switch (info.urgency) {
+      ExamUrgency.urgent => (c.coralSoft, c.danger),
+      ExamUrgency.soon => (c.amberSoft, c.warning),
+      ExamUrgency.normal => (c.primarySoft, c.primary),
+      ExamUrgency.past => (c.mintSoft, c.mint),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: PastelCard(
+        onTap: () => showExamEditorSheet(context, existing: exam),
+        child: Row(
+          children: [
+            SubjectBadge(subject: subject, size: 46, iconSize: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exam.title,
+                    style: t.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${DateFormat('MMM d · h:mm a').format(exam.examAt)}${exam.location.isEmpty ? '' : ' · ${exam.location}'}',
+                    style: t.bodyMedium?.copyWith(fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subject != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subject!.name,
+                      style: t.labelMedium?.copyWith(color: c.primary),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: pillBg,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                info.label,
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: pillFg,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

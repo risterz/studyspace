@@ -35,6 +35,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   List<NoteBlock> _blocks = [NoteBlock(type: NoteBlockType.paragraph, text: '')];
   int _focusedIndex = 0;
   bool _loading = true;
+  bool _deleted = false;
+  bool _savingInFlight = false;
+  bool _saveQueued = false;
   String _saveStatus = 'Saved';
   Timer? _debounce;
 
@@ -95,6 +98,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   void _scheduleSave({bool immediate = false}) {
+    if (_deleted || _loading) return;
     _debounce?.cancel();
     if (mounted && _saveStatus != 'Saving...') {
       setState(() => _saveStatus = 'Saving...');
@@ -107,28 +111,42 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Future<void> _persistNow() async {
-    final syncedBlocks = _blocks
-        .map((b) => b.copyWith(text: _blockControllers[b.id]?.text ?? b.text))
-        .toList();
-    final body = serializeBlocksToMarkdown(syncedBlocks);
-    final title = _titleController.text.trim();
-    if (_activeNoteId == null && title.isEmpty && body.trim().isEmpty) {
-      if (mounted) setState(() => _saveStatus = 'Draft');
+    if (_deleted || _loading) return;
+    if (_savingInFlight) {
+      _saveQueued = true;
       return;
     }
+    _savingInFlight = true;
+    try {
+      final syncedBlocks = _blocks
+          .map((b) => b.copyWith(text: _blockControllers[b.id]?.text ?? b.text))
+          .toList();
+      final body = serializeBlocksToMarkdown(syncedBlocks);
+      final title = _titleController.text.trim();
+      if (_activeNoteId == null && title.isEmpty && body.trim().isEmpty) {
+        if (mounted) setState(() => _saveStatus = 'Draft');
+        return;
+      }
 
-    final savedId = await ref.read(notesRepositoryProvider).saveNote(
-          id: _activeNoteId,
-          subjectId: _subjectId,
-          title: title,
-          body: body,
-          isPinned: _isPinned,
-          existingCreatedAt: _createdAt,
-        );
-    _activeNoteId = savedId;
-    _createdAt ??= DateTime.now();
-    if (mounted) {
-      setState(() => _saveStatus = 'Saved');
+      final savedId = await ref.read(notesRepositoryProvider).saveNote(
+            id: _activeNoteId,
+            subjectId: _subjectId,
+            title: title,
+            body: body,
+            isPinned: _isPinned,
+            existingCreatedAt: _createdAt,
+          );
+      _activeNoteId = savedId;
+      _createdAt ??= DateTime.now();
+      if (mounted) {
+        setState(() => _saveStatus = 'Saved');
+      }
+    } finally {
+      _savingInFlight = false;
+      if (_saveQueued && !_deleted) {
+        _saveQueued = false;
+        unawaited(_persistNow());
+      }
     }
   }
 
@@ -230,6 +248,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               IconButton(
                 tooltip: 'Delete note',
                 onPressed: () async {
+                  _deleted = true;
+                  _debounce?.cancel();
                   await ref
                       .read(notesRepositoryProvider)
                       .deleteNote(_activeNoteId!);

@@ -76,6 +76,26 @@ class _SubjectEditorSheetState extends ConsumerState<SubjectEditorSheet> {
 
   Future<void> _delete() async {
     if (widget.existing == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete subject?'),
+        content: Text(
+          'Removing "${widget.existing!.name}" will unlink it from any classes, assignments, exams, and notes without deleting those items.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     await ref
         .read(appDatabaseProvider)
         .softDeleteSubjectAndUnlink(widget.existing!.id);

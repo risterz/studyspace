@@ -282,17 +282,27 @@ class FocusController extends Notifier<FocusState> {
         ? state.remainingSeconds
         : state.sessionEndAt!.difference(now).inSeconds.clamp(0, state.totalSeconds);
 
+    final audio = ref.read(ambientAudioServiceProvider);
+    if (audio.isPlaying) {
+      await audio.togglePlay();
+    }
+
     state = state.copyWith(
       remainingSeconds: remaining,
       isRunning: false,
       isPaused: true,
       clearSessionEndAt: true,
+      isAudioPlaying: audio.isPlaying,
     );
     await ref.read(notificationServiceProvider).cancelFocusEnd();
   }
 
   Future<void> reset() async {
     _ticker?.cancel();
+    final audio = ref.read(ambientAudioServiceProvider);
+    if (audio.isPlaying) {
+      await audio.stop();
+    }
     final total = _durationForPhase(state.phase);
     state = state.copyWith(
       remainingSeconds: total,
@@ -300,6 +310,7 @@ class FocusController extends Notifier<FocusState> {
       isRunning: false,
       isPaused: false,
       clearSessionEndAt: true,
+      isAudioPlaying: audio.isPlaying,
     );
     await ref.read(notificationServiceProvider).cancelFocusEnd();
   }
@@ -373,6 +384,12 @@ class FocusController extends Notifier<FocusState> {
         _completing = false;
         await start();
         return;
+      }
+
+      final audio = ref.read(ambientAudioServiceProvider);
+      if (audio.isPlaying) {
+        await audio.stop();
+        state = state.copyWith(isAudioPlaying: false);
       }
     } finally {
       _completing = false;

@@ -137,6 +137,23 @@ void main() {
       final profile = await db.getProfile();
       expect(profile?.themeMode, 'dark');
 
+      // Subject deletion requires confirmation dialog before unlinking/deleting
+      await tester.scrollUntilVisible(
+        find.text('Biology'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Biology'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Delete subject'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete subject?'), findsOneWidget);
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      final remaining = await db.getSubjects();
+      expect(remaining.any((s) => s.name == 'Biology'), isFalse);
+
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(const Duration(milliseconds: 50));
       await db.close();

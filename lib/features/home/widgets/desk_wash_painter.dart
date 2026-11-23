@@ -33,7 +33,7 @@ class DeskWashPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    final baseY = size.height - 14;
+    final baseY = 148.0;
     final rightX = size.width - 18;
 
     // Desk surface line

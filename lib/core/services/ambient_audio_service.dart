@@ -51,9 +51,10 @@ abstract class AmbientAudioService {
 }
 
 class _StudySpaceAudioHandler extends BaseAudioHandler {
-  _StudySpaceAudioHandler(this._player);
+  _StudySpaceAudioHandler(this._player, this._onPlayingChanged);
 
   final AudioPlayer _player;
+  final void Function(bool playing) _onPlayingChanged;
 
   Future<void> loadAsset(String assetPath, String title) async {
     mediaItem.add(
@@ -78,6 +79,7 @@ class _StudySpaceAudioHandler extends BaseAudioHandler {
         processingState: AudioProcessingState.ready,
       ),
     );
+    _onPlayingChanged(true);
     await _player.play();
   }
 
@@ -90,6 +92,7 @@ class _StudySpaceAudioHandler extends BaseAudioHandler {
         processingState: AudioProcessingState.ready,
       ),
     );
+    _onPlayingChanged(false);
     await _player.pause();
   }
 
@@ -103,6 +106,7 @@ class _StudySpaceAudioHandler extends BaseAudioHandler {
         processingState: AudioProcessingState.idle,
       ),
     );
+    _onPlayingChanged(false);
     await super.stop();
   }
 }
@@ -136,9 +140,14 @@ class BackgroundAmbientAudioService implements AmbientAudioService {
     if (_initialized || kIsWeb) return;
     try {
       _ambientPlayer = AudioPlayer();
-      _chimePlayer = AudioPlayer();
+      _chimePlayer = AudioPlayer(handleAudioSessionActivation: false);
       _handler = await AudioService.init(
-        builder: () => _StudySpaceAudioHandler(_ambientPlayer!),
+        builder: () => _StudySpaceAudioHandler(_ambientPlayer!, (playing) {
+          if (_isPlaying != playing) {
+            _isPlaying = playing;
+            _emit();
+          }
+        }),
         config: const AudioServiceConfig(
           androidNotificationChannelId: 'com.studyspace.studyspace.ambient',
           androidNotificationChannelName: 'StudySpace Ambient Sound',
@@ -217,10 +226,10 @@ class BackgroundAmbientAudioService implements AmbientAudioService {
   @override
   Future<void> playChime() async {
     try {
-      _chimePlayer ??= AudioPlayer();
+      _chimePlayer ??= AudioPlayer(handleAudioSessionActivation: false);
       await _chimePlayer!.setAsset('assets/audio/chime.wav');
       await _chimePlayer!.setVolume(0.8);
-      await _chimePlayer!.play();
+      unawaited(_chimePlayer!.play());
     } catch (_) {}
   }
 

@@ -72,6 +72,19 @@ class LocalNotificationService implements NotificationService {
     }
   }
 
+  Future<AndroidScheduleMode> _androidScheduleMode() async {
+    try {
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      final canExact = await android?.canScheduleExactNotifications() ?? false;
+      return canExact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle;
+    } catch (_) {
+      return AndroidScheduleMode.inexactAllowWhileIdle;
+    }
+  }
+
   @override
   Future<void> syncAllReminders({
     required bool enabled,
@@ -98,6 +111,7 @@ class LocalNotificationService implements NotificationService {
         exams: exams,
       );
 
+      final scheduleMode = await _androidScheduleMode();
       const details = NotificationDetails(
         android: AndroidNotificationDetails(
           'studyspace_reminders',
@@ -117,7 +131,7 @@ class LocalNotificationService implements NotificationService {
           alert.subtitle,
           scheduled,
           details,
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: scheduleMode,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
@@ -133,6 +147,7 @@ class LocalNotificationService implements NotificationService {
     try {
       await _plugin.cancel(_focusNotificationId);
       if (!endAt.isAfter(DateTime.now())) return;
+      final scheduleMode = await _androidScheduleMode();
       const details = NotificationDetails(
         android: AndroidNotificationDetails(
           'studyspace_focus',
@@ -149,7 +164,7 @@ class LocalNotificationService implements NotificationService {
         '$phaseLabel finished — time for a break.',
         tz.TZDateTime.from(endAt.toUtc(), tz.UTC),
         details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
@@ -168,3 +183,18 @@ class LocalNotificationService implements NotificationService {
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return LocalNotificationService();
 });
+
+Future<void> syncAllRemindersFromDb(
+  AppDatabase db,
+  NotificationService notifications,
+) async {
+  final profile = await db.getProfile();
+  if (profile == null) return;
+  await notifications.syncAllReminders(
+    enabled: profile.notificationsEnabled,
+    classLeadMinutes: profile.classLeadMinutes,
+    events: await db.getAllTimetableEvents(),
+    assignments: await db.getAllAssignments(),
+    exams: await db.getAllExams(),
+  );
+}
