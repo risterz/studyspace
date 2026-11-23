@@ -179,6 +179,7 @@ void main() {
       expect(find.text('Start focus'), findsOneWidget);
       expect(find.text('Pause'), findsOneWidget);
       expect(find.text('Reset'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Rain'), 200);
       expect(find.text('Rain'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());

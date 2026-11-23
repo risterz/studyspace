@@ -5,6 +5,7 @@ import 'package:studyspace/app/theme/studyspace_colors.dart';
 import 'package:studyspace/app/widgets/study_scaffold.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/features/assignments/assignments_screen.dart';
+import 'package:studyspace/features/focus/focus_screen.dart';
 import 'package:studyspace/features/onboarding/onboarding_screen.dart';
 import 'package:studyspace/features/timetable/timetable_screen.dart';
 
@@ -114,7 +115,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/focus',
-                builder: (context, state) => const _PlaceholderTab('Focus'),
+                builder: (context, state) => const FocusScreen(),
               ),
             ],
           ),
