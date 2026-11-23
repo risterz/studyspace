@@ -102,6 +102,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Timetable Events
+  Future<List<TimetableEvent>> getAllTimetableEvents() {
+    return (select(timetableEvents)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm.asc(t.startMinutes)]))
+        .get();
+  }
+
   Stream<List<TimetableEvent>> watchAllTimetableEvents() {
     return (select(timetableEvents)
           ..where((t) => t.isDeleted.equals(false))
@@ -123,6 +130,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Assignments
+  Future<List<Assignment>> getAllAssignments() {
+    return (select(assignments)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.isCompleted),
+            (t) => OrderingTerm.asc(t.dueAt),
+          ]))
+        .get();
+  }
+
   Stream<List<Assignment>> watchAllAssignments() {
     return (select(assignments)
           ..where((t) => t.isDeleted.equals(false))
@@ -147,6 +164,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Exams
+  Future<List<Exam>> getAllExams() {
+    return (select(exams)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm.asc(t.examAt)]))
+        .get();
+  }
+
   Stream<List<Exam>> watchAllExams() {
     return (select(exams)
           ..where((t) => t.isDeleted.equals(false))

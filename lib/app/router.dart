@@ -5,6 +5,7 @@ import 'package:studyspace/app/theme/studyspace_colors.dart';
 import 'package:studyspace/app/widgets/study_scaffold.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/features/onboarding/onboarding_screen.dart';
+import 'package:studyspace/features/timetable/timetable_screen.dart';
 
 class _RouterRefreshNotifier extends ChangeNotifier {
   bool? onboardingDone;
@@ -96,7 +97,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/timetable',
-                builder: (context, state) => const _PlaceholderTab('Timetable'),
+                builder: (context, state) => const TimetableScreen(),
               ),
             ],
           ),

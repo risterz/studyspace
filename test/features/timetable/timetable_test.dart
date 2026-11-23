@@ -154,7 +154,8 @@ void main() {
       await tester.enterText(find.byKey(const Key('event_location_field')), 'Hall C102');
       await tester.tap(find.text('Save event'));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Linear Algebra'), findsOneWidget);
       expect(find.text('Hall C102'), findsOneWidget);
