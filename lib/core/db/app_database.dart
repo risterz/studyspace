@@ -40,6 +40,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Subjects
+  Future<List<Subject>> getSubjects() {
+    return (select(subjects)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.sortOrder),
+            (t) => OrderingTerm.asc(t.name),
+          ]))
+        .get();
+  }
+
   Stream<List<Subject>> watchSubjects() {
     return (select(subjects)
           ..where((t) => t.isDeleted.equals(false))
