@@ -272,8 +272,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
             // Glowing circular timer ring matching Focus mockup
             Center(
               child: SizedBox(
-                width: 244,
-                height: 244,
+                width: 256,
+                height: 256,
                 child: CustomPaint(
                   painter: FocusRingPainter(
                     progress: state.progress,
@@ -286,8 +286,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           color: isBreak ? c.mintSoft : c.primarySoft,
                           shape: BoxShape.circle,
@@ -297,29 +297,30 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                           isBreak
                               ? PhosphorIconsRegular.coffee
                               : PhosphorIconsRegular.brain,
-                          size: 20,
+                          size: 18,
                           color: isBreak ? c.mint : c.primary,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Text(state.phase.label, style: t.bodyMedium),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
+                      Text(state.phase.label,
+                          style: t.bodyMedium?.copyWith(fontSize: 13)),
+                      const SizedBox(height: 2),
                       Text(
                         state.formattedRemaining,
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
-                          fontSize: 48,
+                          fontSize: 44,
                           fontWeight: FontWeight.w700,
                           color: c.inkPrimary,
                           letterSpacing: -1.2,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
+                          horizontal: 12,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: c.primarySoft,
@@ -330,13 +331,16 @@ class _FocusScreenState extends ConsumerState<FocusScreen>
                           children: [
                             Icon(
                               PhosphorIconsRegular.timer,
-                              size: 14,
+                              size: 13,
                               color: c.primary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5),
                             Text(
                               'Pomodoro ${state.currentRound} of ${state.roundsPerCycle}',
-                              style: t.labelMedium?.copyWith(color: c.primary),
+                              style: t.labelSmall?.copyWith(
+                                color: c.primary,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
