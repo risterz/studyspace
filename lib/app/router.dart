@@ -6,6 +6,9 @@ import 'package:studyspace/app/widgets/study_scaffold.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/features/assignments/assignments_screen.dart';
 import 'package:studyspace/features/focus/focus_screen.dart';
+import 'package:studyspace/features/notes/folder_notes_screen.dart';
+import 'package:studyspace/features/notes/note_editor_screen.dart';
+import 'package:studyspace/features/notes/notes_screen.dart';
 import 'package:studyspace/features/onboarding/onboarding_screen.dart';
 import 'package:studyspace/features/timetable/timetable_screen.dart';
 
@@ -123,11 +126,29 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/notes',
-                builder: (context, state) => const _PlaceholderTab('Notes'),
+                builder: (context, state) => const NotesScreen(),
               ),
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/notes/new',
+        builder: (context, state) => NoteEditorScreen(
+          initialSubjectId: state.uri.queryParameters['subjectId'],
+        ),
+      ),
+      GoRoute(
+        path: '/notes/editor/:id',
+        builder: (context, state) => NoteEditorScreen(
+          noteId: state.pathParameters['id'],
+        ),
+      ),
+      GoRoute(
+        path: '/notes/folder/:subjectId',
+        builder: (context, state) => FolderNotesScreen(
+          subjectId: state.pathParameters['subjectId']!,
+        ),
       ),
     ],
   );

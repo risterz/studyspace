@@ -204,6 +204,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Notes
+  Future<List<Note>> getAllNotes() {
+    return (select(notes)
+          ..where((t) => t.isDeleted.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.isPinned),
+            (t) => OrderingTerm.desc(t.updatedAt),
+          ]))
+        .get();
+  }
+
   Stream<List<Note>> watchAllNotes() {
     return (select(notes)
           ..where((t) => t.isDeleted.equals(false))

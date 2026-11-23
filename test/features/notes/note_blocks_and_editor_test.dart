@@ -93,7 +93,7 @@ void main() {
     (tester) async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await seedSampleSemester(db, displayName: 'Maya', referenceNow: DateTime(2026, 11, 23, 9, 30));
-      final seeded = await db.watchAllNotes().first;
+      final seeded = await db.getAllNotes();
       final membraneNote = seeded.firstWhere((n) => n.title == 'Cell membrane review');
 
       await tester.pumpWidget(
