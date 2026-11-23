@@ -75,6 +75,7 @@ void main() {
       for (final brightness in [Brightness.light, Brightness.dark]) {
         await tester.pumpWidget(
           ProviderScope(
+            key: ValueKey(brightness),
             overrides: [
               appDatabaseProvider.overrideWithValue(db),
               notificationServiceProvider.overrideWithValue(NoopNotificationService()),

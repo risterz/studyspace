@@ -8,7 +8,6 @@ import 'package:studyspace/core/db/app_database.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/core/db/sample_seeder.dart';
 import 'package:studyspace/core/services/notification_service.dart';
-import 'package:studyspace/features/assignments/assignments_providers.dart';
 import 'package:studyspace/features/assignments/assignments_repository.dart';
 import 'package:studyspace/features/assignments/assignments_screen.dart';
 

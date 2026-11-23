@@ -6,10 +6,13 @@ import 'package:studyspace/app/widgets/study_scaffold.dart';
 import 'package:studyspace/core/db/database_providers.dart';
 import 'package:studyspace/features/assignments/assignments_screen.dart';
 import 'package:studyspace/features/focus/focus_screen.dart';
+import 'package:studyspace/features/home/home_screen.dart';
+import 'package:studyspace/features/home/upcoming_alerts_sheet.dart';
 import 'package:studyspace/features/notes/folder_notes_screen.dart';
 import 'package:studyspace/features/notes/note_editor_screen.dart';
 import 'package:studyspace/features/notes/notes_screen.dart';
 import 'package:studyspace/features/onboarding/onboarding_screen.dart';
+import 'package:studyspace/features/settings/settings_screen.dart';
 import 'package:studyspace/features/timetable/timetable_screen.dart';
 
 class _RouterRefreshNotifier extends ChangeNotifier {
@@ -32,22 +35,6 @@ class _SplashScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: c.canvas,
       body: const SizedBox.shrink(),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
-        ),
-      ),
     );
   }
 }
@@ -94,7 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const _PlaceholderTab('Home'),
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
@@ -110,7 +97,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/assignments',
-                builder: (context, state) => const AssignmentsScreen(),
+                builder: (context, state) => AssignmentsScreen(
+                  onBellTap: () => showUpcomingAlertsSheet(context),
+                ),
               ),
             ],
           ),
@@ -131,6 +120,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: '/notes/new',
